@@ -10,22 +10,26 @@ export default function HomePage() {
   const [selectedBillId, setSelectedBillId] = useState(null);
   const [billAmount, setBillAmount] = useState(0);
   const [transactionSuccess, setTransactionSuccess] = useState(false);
-  const [recipientAddress, setRecipientAddress] = useState("");
-  const [transferAmount, setTransferAmount] = useState("");
+  
+  const [newOwnerAddress, setNewOwnerAddress] = useState("");
   const [counter, setCounterValue] = useState(0); // New state variable for the counter
-  const contractAddress = "0x1429859428C0aBc9C2C47C8Ee9FBaf82cFA0F20f";
+  const [contractOwner, setContractOwner] = useState(""); // Updated state variable for the contract owner's address
+  const contractAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
   const atmABI = atm_abi.abi;
 
-  const getWallet = async () => {
+  
+  const getWallet = async() => {
     if (window.ethereum) {
       setEthWallet(window.ethereum);
     }
 
     if (ethWallet) {
-      const accounts = await ethWallet.request({ method: "eth_accounts" });
-      setAccount(accounts[0]);
+      const account = await ethWallet.request({method: "eth_accounts"});
+      handleAccount(account);
     }
-  };
+  }
+
+  
 
   const connectAccount = async () => {
     if (!ethWallet) {
@@ -48,12 +52,19 @@ export default function HomePage() {
     setATM(atmContract);
   };
 
+  // const getBalance = async () => {
+  //   if (atm) {
+  //     const balanceBigNumber = await atm.getBalance();
+  //     setBalance(balanceBigNumber.toString());
+  //   }
+  // };
   const getBalance = async () => {
     if (atm) {
       const balanceBigNumber = await atm.getBalance();
-      setBalance(balanceBigNumber.toString());
+      setBalance(ethers.utils.formatEther(balanceBigNumber));
     }
   };
+  
 
   const deposit = async () => {
     if (atm) {
@@ -158,9 +169,40 @@ export default function HomePage() {
       console.log("Total donations:", totalDonations.toString());
     }
   };
+  const getContractOwner = async () => {
+    try {
+      const ownerAddress = await atm.owner();
+      setContractOwner(ownerAddress);
+    } catch (error) {
+      console.error("Error fetching contract owner:", error);
+    }
+  };
 
+  // Function to set a new owner
+  const setNewOwner = async () => {
+    if (atm && newOwnerAddress) {
+      try {
+        const tx = await atm.setNewOwner(newOwnerAddress);
+        await tx.wait();
+  
+        // Show transaction success message
+        setTransactionSuccess(true);
+      } catch (error) {
+        console.error("Error setting new owner:", error);
+      }
+    }
+  };
 
-  useEffect(() => { getWallet(); }, []);
+  // useEffect(() => {
+  //   getWallet();
+  //   getATMContract();
+  //   getBalance();
+  //   getContractOwner(); // Fetch the contract owner's address when the component mounts
+  // }, []);
+  useEffect(() => {
+    getWallet();
+  }, []);
+ 
 
   if (!ethWallet) {
     return <p>Please install Metamask in order to use this ATM.</p>;
@@ -183,19 +225,7 @@ export default function HomePage() {
         <button onClick={deposit}>Deposit 1 ETH</button>
         <button onClick={withdraw}>Withdraw 1 ETH</button>
       </div>
-      <div>
-        <input
-          type="text"
-          placeholder="Recipient Address"
-          onChange={(e) => setRecipientAddress(e.target.value)}
-        />
-        <input
-          type="number"
-          placeholder="Amount to Transfer"
-          onChange={(e) => setTransferAmount(e.target.value)}
-        />
-        <button onClick={() => transferFunds(recipientAddress, transferAmount)}>Transfer Funds</button>
-      </div>
+     
       <div>
         <h2>Pay Bills</h2>
         <ul>
@@ -229,6 +259,24 @@ export default function HomePage() {
       <button onClick={donate}>Donate 0.1 ETH</button>
       <button onClick={getDonationTotal}>Get Total Donations</button>
     </div>
+    <div>
+        <h2>Contract Owner</h2>
+        <div>
+        <button onClick={getContractOwner}>Fetch Contract Owner</button>
+          <p>Contract Owner: {contractOwner}</p> {/* Display the contract owner's address */}
+          <div>
+            <input
+              type="text"
+              placeholder="Enter New Owner Address"
+              value={newOwnerAddress}
+              onChange={(e) => setNewOwnerAddress(e.target.value)}
+            />
+            <button onClick={setNewOwner}>Change Owner</button>
+          </div>
+        </div>
+      
+      </div>
+
       <style jsx>{`
         .container {
           text-align: center

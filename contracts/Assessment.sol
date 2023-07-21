@@ -80,7 +80,7 @@ contract Assessment {
         revert("Invalid billId");
     }
 
-    function getBillRecipient(uint256 billId) public view returns (address payable) {
+    function getBillRecipient(uint256 billId)  public pure  returns (address payable) {
         if (billId == 0) {
             return payable(0x1111111111111111111111111111111111111111); // Replace with the Electric Bill recipient address
         } else if (billId == 1) {
@@ -106,5 +106,13 @@ contract Assessment {
 
     function getDonationTotal() public view returns (uint256) {
         return totalDonations;
+    }
+     function getContractOwner() public view returns (address) {
+        return owner;
+    }
+
+    function setNewOwner(address newOwner) public onlyOwner {
+        require(newOwner != address(0), "Invalid new owner address");
+        owner = newOwner;
     }
 }
