@@ -14,7 +14,7 @@ export default function HomePage() {
   const [newOwnerAddress, setNewOwnerAddress] = useState("");
   const [counter, setCounterValue] = useState(0); // New state variable for the counter
   const [contractOwner, setContractOwner] = useState(""); // Updated state variable for the contract owner's address
-  const contractAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
+  const contractAddress = "0x0165878A594ca255338adfa4d48449f69242Eb8F";
   const atmABI = atm_abi.abi;
 
   
@@ -29,7 +29,15 @@ export default function HomePage() {
     }
   }
 
-  
+  const handleAccount = (account) => {
+    if (account) {
+      console.log ("Account connected: ", account);
+      setAccount(account);
+    }
+    else {
+      console.log("No account found");
+    }
+  }
 
   const connectAccount = async () => {
     if (!ethWallet) {
@@ -61,9 +69,13 @@ export default function HomePage() {
   const getBalance = async () => {
     if (atm) {
       const balanceBigNumber = await atm.getBalance();
-      setBalance(ethers.utils.formatEther(balanceBigNumber));
+      const balanceInEther = ethers.utils.formatEther(balanceBigNumber);
+      const formattedBalance = parseFloat(balanceInEther).toFixed(2);
+      setBalance(formattedBalance);
     }
   };
+  
+  
   
 
   const deposit = async () => {
@@ -192,13 +204,23 @@ export default function HomePage() {
       }
     }
   };
+  const deposit100ETH = async () => {
+    if (atm) {
+      const tx = await atm.deposit(ethers.utils.parseEther("100"));
+      await tx.wait();
+      getBalance();
+    }
+  };
 
-  // useEffect(() => {
-  //   getWallet();
-  //   getATMContract();
-  //   getBalance();
-  //   getContractOwner(); // Fetch the contract owner's address when the component mounts
-  // }, []);
+  const withdraw50ETH = async () => {
+    if (atm) {
+      const tx = await atm.withdraw(ethers.utils.parseEther("50"));
+      await tx.wait();
+      getBalance();
+    }
+  };
+
+  
   useEffect(() => {
     getWallet();
   }, []);
@@ -218,14 +240,33 @@ export default function HomePage() {
 
   return (
     <main className="container">
-      <header><h1>Welcome to the Metacrafters ATM!</h1></header>
+      <header><h1>Welcome to Solution!</h1></header>
       <div>
         <p>Your Account: {account}</p>
         <p>Your Balance: {balance} ETH</p>
         <button onClick={deposit}>Deposit 1 ETH</button>
         <button onClick={withdraw}>Withdraw 1 ETH</button>
+        <button onClick={deposit100ETH}>Deposit 100 ETH</button> {/* New button */}
+        <button onClick={withdraw50ETH}>Withdraw 50 ETH</button> {/* New button */}
       </div>
-     
+      <div>
+        <h2>Contract Owner</h2>
+        <div>
+        <button onClick={getContractOwner}>Fetch Contract Owner</button>
+          <p>Contract Owner: {contractOwner}</p> {/* Display the contract owner's address */}
+          <div>
+            <input
+              type="text"
+              placeholder="Enter New Owner Address"
+              value={newOwnerAddress}
+              onChange={(e) => setNewOwnerAddress(e.target.value)}
+            />
+            <button onClick={setNewOwner}>Change Owner</button>
+          </div>
+        </div>
+      
+      </div>
+
       <div>
         <h2>Pay Bills</h2>
         <ul>
@@ -259,24 +300,7 @@ export default function HomePage() {
       <button onClick={donate}>Donate 0.1 ETH</button>
       <button onClick={getDonationTotal}>Get Total Donations</button>
     </div>
-    <div>
-        <h2>Contract Owner</h2>
-        <div>
-        <button onClick={getContractOwner}>Fetch Contract Owner</button>
-          <p>Contract Owner: {contractOwner}</p> {/* Display the contract owner's address */}
-          <div>
-            <input
-              type="text"
-              placeholder="Enter New Owner Address"
-              value={newOwnerAddress}
-              onChange={(e) => setNewOwnerAddress(e.target.value)}
-            />
-            <button onClick={setNewOwner}>Change Owner</button>
-          </div>
-        </div>
-      
-      </div>
-
+   
       <style jsx>{`
         .container {
           text-align: center
