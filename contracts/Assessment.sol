@@ -7,7 +7,11 @@ contract Assessment {
 
     event Deposit(uint256 amount);
     event Withdraw(uint256 amount);
-    event DonationReceived(address sender, uint256 amount);
+     uint256 public counter = 0;
+    uint256 public totalDonations = 0;
+
+    event DonationReceived(address indexed from, uint256 amount);
+    // event DonationReceived(address sender, uint256 amount);
     event FundsTransferred(address sender, address recipient, uint256 amount);
     event BillPaid(address indexed payer, uint256 indexed billId, uint256 amount);
 
@@ -85,5 +89,22 @@ contract Assessment {
             return payable(0x3333333333333333333333333333333333333333); // Replace with the Rent recipient address
         }
         revert("Invalid billId");
+    }
+
+     function increaseCounter() public {
+        counter++;
+    }
+
+    function decreaseCounter() public {
+        counter--;
+    }
+
+    function donate() public payable {
+        totalDonations += msg.value;
+        emit DonationReceived(msg.sender, msg.value);
+    }
+
+    function getDonationTotal() public view returns (uint256) {
+        return totalDonations;
     }
 }

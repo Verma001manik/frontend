@@ -12,8 +12,8 @@ export default function HomePage() {
   const [transactionSuccess, setTransactionSuccess] = useState(false);
   const [recipientAddress, setRecipientAddress] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
-
-  const contractAddress = "0x82e01223d51Eb87e16A03E24687EDF0F294da6f1";
+  const [counter, setCounterValue] = useState(0); // New state variable for the counter
+  const contractAddress = "0x1429859428C0aBc9C2C47C8Ee9FBaf82cFA0F20f";
   const atmABI = atm_abi.abi;
 
   const getWallet = async () => {
@@ -80,8 +80,11 @@ export default function HomePage() {
           ethers.utils.parseEther(amount.toString())
         );
         await tx.wait();
-        setTransactionSuccess(true); // Set transaction success message
-        getBalance(); // Update balance after successful transfer
+        setBalance((prevBalance) => {
+          const newBalance = ethers.utils.formatEther(prevBalance.sub(amount));
+          return newBalance;
+        });
+        console.log("Transaction successful!");
       } else {
         console.error("Insufficient contract balance");
       }
@@ -90,6 +93,7 @@ export default function HomePage() {
     }
   }
 
+ 
   const handleBillSelect = (billId, amount) => {
     setSelectedBillId(billId);
     setBillAmount(amount);
@@ -113,6 +117,48 @@ export default function HomePage() {
       }
     }
   };
+  const increaseCounter = async () => {
+    if (atm) {
+      let tx = await atm.increaseCounter();
+      await tx.wait();
+      // Fetch the updated value of the counter from the contract
+      const counter = await atm.counter();
+      setCounterValue(counter.toNumber());
+    }
+  };
+  
+
+  // Function to decrease the counter
+  const decreaseCounter = async () => {
+    if (atm) {
+      let tx = await atm.decreaseCounter();
+      await tx.wait();
+      // Fetch the updated value of the counter from the contract
+      const counter = await atm.counter();
+      setCounterValue(counter.toNumber());
+    }
+  };
+  
+
+  // Function to make a donation
+  const donate = async () => {
+    if (atm) {
+      const donationAmount = ethers.utils.parseEther("0.1"); // You can change the donation amount here
+      const tx = await atm.donate({ value: donationAmount });
+      await tx.wait();
+      console.log("Donation received!");
+      getDonationTotal();
+    }
+  };
+
+  // Function to get the total donations
+  const getDonationTotal = async () => {
+    if (atm) {
+      const totalDonations = await atm.getDonationTotal();
+      console.log("Total donations:", totalDonations.toString());
+    }
+  };
+
 
   useEffect(() => { getWallet(); }, []);
 
@@ -172,6 +218,17 @@ export default function HomePage() {
           </div>
         )}
       </div>
+      <div>
+      <h2>Counter</h2>
+      <p>Counter: {counter}</p>
+      <button onClick={increaseCounter}>Increase Counter</button>
+      <button onClick={decreaseCounter}>Decrease Counter</button>
+    </div>
+    <div>
+      <h2>Donations</h2>
+      <button onClick={donate}>Donate 0.1 ETH</button>
+      <button onClick={getDonationTotal}>Get Total Donations</button>
+    </div>
       <style jsx>{`
         .container {
           text-align: center
